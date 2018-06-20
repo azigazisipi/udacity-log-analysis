@@ -21,7 +21,7 @@ In this, we have to execute complex queries on a large database to extract requi
 ### To Run
 
 Download `newsdata.sql` from Udacity course page.
-
+Download the Udacity virtual machine configuration into a fresh new directory and start it from there.
 Launch Vagrant VM by running `vagrant up`, you can the log in with `vagrant ssh`
 
 To load the data, use the command `psql -d news -f newsdata.sql` to connect a database and run the necessary SQL statements.
