@@ -1,71 +1,102 @@
-#!/usr/bin/env python3
 import psycopg2
 
-
-query_1_title = ("What are the most popular three articles of all time?")
-query_1 = (
-    "select articles.title, count(*) as views "
-    "from articles inner join log on log.path "
-    "like concat('%', articles.slug, '%') "
-    "where log.status like '%200%' group by "
-    "articles.title, log.path order by views desc limit 3")
-
-query_2_title = ("Who are the most popular article authors of all time?")
-query_2 = (
-    "select authors.name, count(*) as views from articles inner "
-    "join authors on articles.author = authors.id inner join log "
-    "on log.path like concat('%', articles.slug, '%') where "
-    "log.status like '%200%' group "
-    "by authors.name order by views desc")
-
-query_3_title = ("On which days did more than 1% of requests lead to errors?")
-query_3 = (
-    "select day, perc from ("
-    "select day, round((sum(requests)/(select count(*) from log where "
-    "substring(cast(log.time as text), 0, 11) = day) * 100), 2) as "
-    "perc from (select substring(cast(log.time as text), 0, 11) as day, "
-    "count(*) as requests from log where status like '%404%' group by day)"
-    "as log_percentage group by day order by perc desc) as final_query "
-    "where perc >= 1")
-
-
-def connect(database_name="news"):
-    """Connect to the PostgreSQL database. Returns a database connection """
+# Create connection
+def con(dbname="news"):
     try:
-        db = psycopg2.connect("dbname={}".format(database_name))
-        cursor = db.cursor()
-        return db, cursor
+        db = psycopg2.connect("dbname={}".format(dbname))
+        cur = db.cursor()
+        return db, cur
     except:
-        print ("Unable to connect to the database")
+        print("Error in connecting to database")
+
+#Views and queries        
+view1 = "create or replace view popular_articles as select title,count(title)\
+        as views from articles, log where log.path = concat('/article/' \
+        , articles.slug) group by title order by views desc"
+
+view2 = "create or replace view popular_authors as select authors.name,\
+        count(articles.author) as views from articles, log, authors where\
+        log.path = concat('/article/',articles.slug) and\
+        articles.author = authors.id group by authors.name order by views desc"
+
+view3 = "create or replace view error_status as select * from (select \
+        time::timestamp::date as Date, round((sum(case log.status when \
+        '404 NOT FOUND' then 1 else 0 end)*100.0)/count(log.status), 2) \
+        as error_percent from log group by time::timestamp::date order \
+        by error_percent desc) as subq where error_percent >1"
+
+query1 = "select * from popular_articles limit 3"
+
+query2 = "select * from popular_authors"
+
+query3 = "select * from error_status"
+
+#Create views
+def view_articles():
+    try:
+        db, cur = con()
+        cur.execute(view1)
+        db.commit()
+        db.close()
+    except:
+        print("Error in creating view popular_articles")
+def view_authors():
+    try:
+        db, cur = con()
+        cur.execute(view2)
+        db.commit()
+        db.close()
+    except:
+        print("Error in creating view popular_authors")
+def view_logs():
+    try:
+        db, cur = con()
+        cur.execute(view3)
+        db.commit()
+        db.close()
+    except:
+        print("Error in creating view error_status")
 
 
-def get_query_results(query):
-    """Return query results for given query """
-    db, cursor = connect()
-    cursor.execute(query)
-    return cursor.fetchall()
+#Run queries
+def most_popular_articles():
+    db, cur = con()
+    cur.execute(query1)
+    result = cur.fetchall()
     db.close()
+    print "\nThe 3 most popluar Articles of all time:\n"
+    for i in range(0, len(result), 1):
+        print "\"" + result[i][0] + "\" - " + str(result[i][1]) + " views"
 
 
-def print_query_results(query_results):
-    print (query_results[1])
-    for index, results in enumerate(query_results[0]):
-        print (
-            "\t", index+1, "-", results[0],
-            "\t - ", str(results[1]), "views")
+def most_popular_authors():
+    db, cur = con()
+    cur.execute(query2)
+    result = cur.fetchall()
+    db.close()
+    print "\nThe most popular authors of all time:\n"
+    for i in range(0, len(result), 1):
+        print "\"" + result[i][0] + "\" - " + str(result[i][1]) + " views"
 
 
-def print_error_results(query_results):
-    print (query_results[1])
-    for results in query_results[0]:
-        print ("\t", results[0], "-", str(results[1]) + "% errors")
-
+def error_logs():
+    db, cur = con()
+    cur.execute(query3)
+    result = cur.fetchall()
+    db.close()
+    print "\nDays with more than 1% of request errors:\n"
+    for i in range(0, len(result), 1):
+        print str(result[i][0])+ " - "+str(round(result[i][1], 2))+"% errors"
 
 if __name__ == '__main__':
-    popular_articles_results = get_query_results(query_1), query_1_title
-    popular_authors_results = get_query_results(query_2), query_2_title
-    load_error_days = get_query_results(query_3), query_3_title
+    
+    
+    view_articles()
+    view_authors()
+    view_logs()
+    
+    most_popular_articles()
+    most_popular_authors()
+    error_logs()
+    
 
-    print_query_results(popular_articles_results)
-    print_query_results(popular_authors_results)
-    print_error_results(load_error_days)
