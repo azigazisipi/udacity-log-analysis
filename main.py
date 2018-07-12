@@ -9,7 +9,7 @@ def con(dbname="news"):
     except:
         print("Error in connecting to database")
 
-#Views and queries        
+#Views and queries
 view1 = "create or replace view popular_articles as select title,count(title)\
         as views from articles, log where log.path = concat('/article/' \
         , articles.slug) group by title order by views desc"
@@ -89,14 +89,12 @@ def error_logs():
         print str(result[i][0])+ " - "+str(round(result[i][1], 2))+"% errors"
 
 if __name__ == '__main__':
-    
-    
+
+
     view_articles()
     view_authors()
     view_logs()
-    
+
     most_popular_articles()
     most_popular_authors()
     error_logs()
-    
-
