@@ -9,7 +9,9 @@ def con(dbname="news"):
     except:
         print("Error in connecting to database")
 
-#Views and queries        
+""""
+"""" If you would like to run views from code, uncomment this part 1/3 """"
+#Views        
 view1 = "create or replace view popular_articles as select title,count(title) \
         as views from articles, log where log.path = concat('/article/', \
         articles.slug) group by title order by views desc"
@@ -24,13 +26,17 @@ view3 = "create or replace view error_status as select * from \
         '404 NOT FOUND' then 1 else 0 end)*100.0)/count(log.status), 2) \
         as error_percent from log group by time::timestamp::date order \
         by error_percent desc) as subq where error_percent >1"
+"""
 
+#Queries
 query1 = "select * from popular_articles limit 3"
 
 query2 = "select * from popular_authors"
 
 query3 = "select * from error_status"
 
+"""
+"""" If you would like to run views from code, uncomment this part 2/3 """"
 #Create views
 def view_articles():
     try:
@@ -57,7 +63,7 @@ def view_logs():
     except:
         print("Error in creating view error_status")
 
-
+"""
 #Run queries
 def most_popular_articles():
     db, cur = con()
@@ -90,10 +96,12 @@ def error_logs():
 
 if __name__ == '__main__':
     
-    
+    """
+    """" If you would like to run views from code, uncomment this part 3/3 """"
     view_articles()
     view_authors()
     view_logs()
+    """
     
     most_popular_articles()
     most_popular_authors()
