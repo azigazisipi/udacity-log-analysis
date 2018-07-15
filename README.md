@@ -35,20 +35,20 @@ The database includes three tables:
 
   - The 3 most popluar Articles of all time:
   
-        create or replace view popular_articles as select title,count(title) 
+        create view popular_articles as select title,count(title) 
         as views from articles, log where log.path = concat('/article/',
         articles.slug) group by title order by views desc;
   
   - The most popular authors of all time:        
         
-        create or replace view popular_authors as select authors.name,
+        create view popular_authors as select authors.name,
         count(articles.author) as views from articles, log, authors where 
         log.path = concat('/article/',articles.slug) and 
         articles.author = authors.id group by authors.name order by views desc;
   
   - Days with more than 1% of request errors:
         
-        create or replace view error_status as select * from 
+        create view error_status as select * from 
         (select time::timestamp::date as Date, round((sum(case log.status when 
         '404 NOT FOUND' then 1 else 0 end)*100.0)/count(log.status), 2) 
         as error_percent from log group by time::timestamp::date order 
