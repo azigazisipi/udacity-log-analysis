@@ -1,6 +1,10 @@
+#!/usr/bin/env python
+
 import psycopg2
 
 # Create connection
+
+
 def con(dbname="news"):
     try:
         db = psycopg2.connect("dbname={}".format(dbname))
@@ -11,7 +15,9 @@ def con(dbname="news"):
 
 """"
 """" If you would like to run views from code, uncomment this part 1/3 """"
-#Views        
+#Views
+
+
 view1 = "create or replace view popular_articles as select title,count(title) \
         as views from articles, log where log.path = concat('/article/', \
         articles.slug) group by title order by views desc"
@@ -22,13 +28,13 @@ view2 = "create or replace view popular_authors as select authors.name, \
         articles.author = authors.id group by authors.name order by views desc"
 
 view3 = "create or replace view error_status as select * from \
-        (select time::timestamp::date as Date, round((sum(case log.status when \
-        '404 NOT FOUND' then 1 else 0 end)*100.0)/count(log.status), 2) \
+        (select time::timestamp::date as Date, round((sum(case log.status \
+        when '404 NOT FOUND' then 1 else 0 end)*100.0)/count(log.status), 2) \
         as error_percent from log group by time::timestamp::date order \
         by error_percent desc) as subq where error_percent >1"
 """
 
-#Queries
+# Queries
 query1 = "select * from popular_articles limit 3"
 
 query2 = "select * from popular_authors"
@@ -64,7 +70,9 @@ def view_logs():
         print("Error in creating view error_status")
 
 """
-#Run queries
+# Run queries
+
+
 def most_popular_articles():
     db, cur = con()
     cur.execute(query1)
@@ -92,19 +100,17 @@ def error_logs():
     db.close()
     print "\nDays with more than 1% of request errors:\n"
     for i in range(0, len(result), 1):
-        print str(result[i][0])+ " - "+str(round(result[i][1], 2))+"% errors"
+        print str(result[i][0]) + " - "+str(round(result[i][1], 2))+"% errors"
 
 if __name__ == '__main__':
-    
+
     """
     """" If you would like to run views from code, uncomment this part 3/3 """"
     view_articles()
     view_authors()
     view_logs()
     """
-    
+
     most_popular_articles()
     most_popular_authors()
     error_logs()
-    
-
